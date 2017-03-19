@@ -4,31 +4,26 @@
              [string :refer [ends-with?]]])
   (:import [java.lang.reflect Modifier]))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+;; (defn is-gc-class?
+;;   [clazz]
+;;   (->> (.getName clazz)
+;;        (re-find #"com\.google\.cloud")
+;;        (some?)))
 
-(defn is-gc-class?
-  [clazz]
-  (->> (.getName clazz)
-       (re-find #"com\.google\.cloud")
-       (some?)))
+;; (defn matching-methods
+;;   [methods name]
+;;   (reduce (fn [l v]
+;;             (if (= (.getName v) name)
+;;               (conj l v)
+;;               l))
+;;           []
+;;           methods))
 
-(defn matching-methods
-  [methods name]
-  (reduce (fn [l v]
-            (if (= (.getName v) name)
-              (conj l v)
-              l))
-          []
-          methods))
-
-(defn find-methods
-  [pojo name]
-  (-> (.getClass pojo)
-      (.getMethods)
-      (matching-methods name)))
+;; (defn find-methods
+;;   [pojo name]
+;;   (-> (.getClass pojo)
+;;       (.getMethods)
+;;       (matching-methods name)))
 
 (defn builder-fns
   "Obtain the public static builder functions of the class or an empty sequence if it doesn't have any."
@@ -53,8 +48,8 @@
   (or (get primitive-mapping p) p))
 
 (defn matching-args?
-  [args1 args2]
-  (= (seq (map replace-primitive-type args1)) args2))
+  [java-args cl-args]
+  (= (seq (map replace-primitive-type java-args)) cl-args))
 
 (defn matching-builder-fn
   "Obtain the public static builder function that has a signature that matches the given argument classes."
