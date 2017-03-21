@@ -10,7 +10,7 @@
 
 (deftest build-function
   (testing "Zero argument non-overloaded static function definition built correctly"
-    (test-function-build {:methods-args '()
+    (test-function-build {:methods-args '(())
                           :expected "(fn [] (the.Class/theFunction))"}))
 
   (testing "Non-overloaded static function with single argument definition built correctly"

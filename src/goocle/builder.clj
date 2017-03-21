@@ -43,9 +43,7 @@
 (defn build-fn
   "Build definition of function to call method on class based on relevant incoming parameters."
   [class-name method-name]
-  (let [ordered-methods-args (r/get-ordered-methods-args class-name method-name)
-        method-count (count ordered-methods-args)]
-    (cond
-      (zero? method-count) (build-zero-args-fn class-name method-name)
-      ;(= 1 method-count) (build-single-arg-fn class-name method-name (first ordered-methods-args))
-      :else (build-multi-arg-fn class-name method-name ordered-methods-args))))
+  (let [ordered-methods-args (r/get-ordered-methods-args class-name method-name)]
+    (if (and (= 1 (count ordered-methods-args)) (empty? (first ordered-methods-args)))
+      (build-zero-args-fn class-name method-name)
+      (build-multi-arg-fn class-name method-name ordered-methods-args))))
