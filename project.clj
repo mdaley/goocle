@@ -4,7 +4,6 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/core.typed "0.3.32"]
                  [camel-snake-kebab "0.2.5"]
                  [com.google.cloud/google-cloud "0.7.0-WithParameters" :exclusions [io.grpc/grpc-core
                                                                                     io.netty/netty-codec-http2]

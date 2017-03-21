@@ -40,38 +40,45 @@
   [reflector]
   (get-classes-with-method reflector "newBuilder"))
 
+(defn coerce-if-primitive
+  "Coerce to primitive if necessary."
+  [p]
+  (case p
+    "float" "java.lang.Float"
+    "int" "java.lang.Integer"
+    "long" "java.lang.Long"
+    "boolean" "java.lang.Boolean"
+    "char" "java.lang.Character"
+    "double" "java.lang.Double"
+    "byte" "java.lang.Byte"
+    "short" "java.lang.Short"
+    p))
+
 (defn get-method-args
   [method]
   (map (fn [v] {:name (.getName v)
-               :type (.getTypeName (.getType v))}) (seq (.getParameters method))))
+               :type (coerce-if-primitive (.getTypeName (.getType v)))}) (seq (.getParameters method))))
 
-(defn method->fn-str
-  [clazz mthd]
-  (let [args (get-method-args mthd)]
-    (str "(fn "
-         "["
-         (reduce str (interpose " " (map #(str "^" (:type %) " " (:name %)) args)))
-         "] (."
-         (.getName mthd)
-         " "
-         (.getName clazz)
-         " "
-         (reduce str (interpose " " (map :name args)))
-         ")")))
+(defn get-ordered-methods-args
+  [class-name method-name]
+  (->> (get-methods (Class/forName class-name) method-name)
+       (map get-method-args)
+       (sort-by #(count (keys %)))
+       reverse))
 
-(defn generate-fn
-  "Generate functions for method with the given name in the chosen class."
-  [clazz method-name]
-  (when-let [methods (get-methods clazz method-name)]
-    (map )))
+;; (defn generate-fn
+;;   "Generate functions for method with the given name in the chosen class."
+;;   [clazz method-name]
+;;   (when-let [methods (get-methods clazz method-name)]
+;;     (map )))
 
-(defn make-fn-name
-  [prefix class]
-  (-> (.getName class)
-      (split #"\.")
-      last
-      ->kebab-case
-      ((partial str prefix))))
+;; (defn make-fn-name
+;;   [prefix class]
+;;   (-> (.getName class)
+;;       (split #"\.")
+;;       last
+;;       ->kebab-case
+;;       ((partial str prefix))))
 
 (defn intern-fn
   [ns {:keys [name fn] :as fn-def}]
@@ -80,40 +87,7 @@
     (create-ns ns-sym)
     (intern ns-sym name-sym (eval (read-string fn)))))
 
-(defn build-cond-clause
-  [clazz method-name args]
-  (str "(and "
-       (reduce str (interpose " " (map #(->kebab-case (:name %)) args)))
-       " "
-       (reduce str (interpose " " (map #(str "(instance? " (:type %) " " (->kebab-case (:name %)) ")") args)))
-       ") (. "
-       method-name " "(.getName clazz) " "
-       (reduce str (interpose " " (map #(->kebab-case (:name %)) args)))
-       ")"))
-
-(defn build-fn-dispatcher
-  [clazz method-name]
-  (let [methods (get-methods clazz method-name)
-        methods-args (map get-method-args methods)
-        ordered-methods-args (reverse (sort-by #(count (keys %)) methods-args))
-        arg-names (distinct (map :name (flatten methods-args)))]
-
-    (str "(cond"
-         (map #() ordered-methods-args)
-         ":else \"error\")")
-
-    ;; (str "(fn [{:keys ["
-    ;;      (->> (map #(->kebab-case %) arg-names)
-    ;;            (interpose " ")
-    ;;            (reduce str))
-    ;;      "] :as __args}]"
-    ;;      "(let [__size (count __args)]"
-    ;;      "__args"
-    ;;      ")"
-    ;;      ")")
-    ))
-
-(defn make-creators
-  [namespace]
-  (let [classes (get-classes-with-method (get-reflector-for-namespace namespace) "newBuilder")]
-    (map (partial make-fn-name "create-") classes)))
+;; (defn make-creators
+;;   [namespace]
+;;   (let [classes (get-classes-with-method (get-reflector-for-namespace namespace) "newBuilder")]
+;;     (map (partial make-fn-name "create-") classes)))
