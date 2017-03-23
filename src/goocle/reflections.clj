@@ -80,13 +80,6 @@
 ;;       ->kebab-case
 ;;       ((partial str prefix))))
 
-(defn intern-fn
-  [ns {:keys [name fn] :as fn-def}]
-  (let [ns-sym (symbol ns)
-        name-sym (symbol name)]
-    (create-ns ns-sym)
-    (intern ns-sym name-sym (eval (read-string fn)))))
-
 ;; (defn make-creators
 ;;   [namespace]
 ;;   (let [classes (get-classes-with-method (get-reflector-for-namespace namespace) "newBuilder")]

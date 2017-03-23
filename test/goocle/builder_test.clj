@@ -18,6 +18,16 @@
                                             :type "the.Type"}))
                           :expected "(fn [{:keys [name]}] (cond (and name (instance? the.Type name)) (the.Class/theFunction name) :else (throw IllegalArgumentException.)))"}))
 
+  (testing "Function names are not changed"
+    (test-function-build {:methods-args '(({:name "name"
+                                            :type "the.namespace.and.TypeLikeThis"}))
+                          :expected "(fn [{:keys [name]}] (cond (and name (instance? the.namespace.and.TypeLikeThis name)) (the.Class/theFunction name) :else (throw IllegalArgumentException.)))"}))
+
+  (testing "Argument names are transformed to kebab case"
+    (test-function-build {:methods-args '(({:name "nameLikeThis"
+                                            :type "the.Type"}))
+                          :expected "(fn [{:keys [name-like-this]}] (cond (and name-like-this (instance? the.Type name-like-this)) (the.Class/theFunction name-like-this) :else (throw IllegalArgumentException.)))"}))
+
   (testing "Non-overloaded multi-argument static function definition built correctly"
     (test-function-build {:methods-args '(({:name "name"
                                             :type "the.Type"}

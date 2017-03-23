@@ -25,18 +25,13 @@
   [class-name method-name]
   (format "(fn [] (%s/%s))" class-name method-name))
 
-(defn build-single-arg-fn
-  [class-name method-name {n :name t :type}]
-  (format "(fn [%s] (if (instance? %s %s) (%s/%s %s) (throw IllegalArgumentException.)))"
-          n t n class-name method-name n))
-
 (defn build-multi-arg-fn
   [class-name method-name args]
-  (let [arg-names (reduce str (interpose " " (distinct (map :name (flatten args)))))
+  (let [arg-names (kebabed (distinct (map :name (flatten args)))) ;(reduce str (interpose " " (distinct (map :name (flatten args)))))
         no-zero-args-overload? (seq (last args))
         cond-clause  (str "(cond "
                           (reduce str (interpose " " (map (partial build-cond-part class-name method-name) args)))
-                          (when no-zero-args-overload? " :else (throw IllegalArgumentException.)")
+                          (when no-zero-args-overload? (str " :else (throw (IllegalArgumentException. \"Please use valid combination of arguments from the set '" arg-names "'\"))"))
                           ")")]
         (format "(fn [{:keys [%s]}] %s)" arg-names cond-clause)))
 

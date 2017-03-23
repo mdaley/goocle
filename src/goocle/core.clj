@@ -1,65 +1,40 @@
 (ns goocle.core
-  (:require [clojure
-             [set :refer [map-invert]]
-             [string :refer [ends-with?]]])
+  (:require [goocle
+             [reflections :as r]
+             [builder :as b]]
+            [clojure
+                [set :refer [map-invert]]
+             [string :refer [ends-with?]]]
+            [camel-snake-kebab.core :refer [->kebab-case]
+             ])
   (:import [java.lang.reflect Modifier]))
 
-;; (defn is-gc-class?
-;;   [clazz]
-;;   (->> (.getName clazz)
-;;        (re-find #"com\.google\.cloud")
-;;        (some?)))
 
-;; (defn matching-methods
-;;   [methods name]
-;;   (reduce (fn [l v]
-;;             (if (= (.getName v) name)
-;;               (conj l v)
-;;               l))
-;;           []
-;;           methods))
+(defn intern-fn
+  [{:keys [ns name ftn] :as fn-def}]
+  (let [ns-sym (symbol ns)
+        name-sym (symbol name)]
+    (println ns-sym name-sym)
+    (create-ns ns-sym)
+    (intern ns-sym name-sym (eval (read-string ftn)))))
 
-;; (defn find-methods
-;;   [pojo name]
-;;   (-> (.getClass pojo)
-;;       (.getMethods)
-;;       (matching-methods name)))
-
-(defn builder-fns
-  "Obtain the public static builder functions of the class or an empty sequence if it doesn't have any."
+(defn- ftn-name
   [clazz]
-  (->> (.getMethods clazz)
-       (filter #(and (= (.getName %) "newBuilder")
-                     (Modifier/isStatic (.getModifiers %))
-                     (Modifier/isPublic (.getModifiers %))))))
+  (->kebab-case (.getSimpleName clazz)))
 
-(def primitive-mapping
-  {Boolean/TYPE Boolean
-   Byte/TYPE Byte
-   Character/TYPE Character
-   Double/TYPE Double
-   Float/TYPE Float
-   Integer/TYPE Integer
-   Long/TYPE Long
-   Short/TYPE Short})
+(defn- local-ns
+  [clazz]
+  (-> (.getPackage clazz)
+      (.getName)
+      (clojure.string/replace #"com.google.cloud." "")
+      (clojure.string/replace #"\." "-")
+      (->kebab-case)
+      ((partial str "goocle."))))
 
-(defn replace-primitive-type
-  [p]
-  (or (get primitive-mapping p) p))
-
-(defn matching-args?
-  [java-args cl-args]
-  (= (seq (map replace-primitive-type java-args)) cl-args))
-
-(defn matching-builder-fn
-  "Obtain the public static builder function that has a signature that matches the given argument classes."
-  [clazz arg-classes]
-  (->> (builder-fns clazz)
-       (filter #(matching-args? (seq (.getParameterTypes %)) arg-classes))
-       first))
-
-(defn create-builder
-  [clazz & args]
-  (let [arg-classes (seq (map #(.getClass %) args))]
-    (when-let [new-builder-fn (matching-builder-fn clazz arg-classes)]
-      (.invoke new-builder-fn nil (when args (into-array Object args))))))
+(defn intern-all-builders
+  []
+  (let [r (r/get-reflector-for-namespace "com.google.cloud")
+        builder-classes (r/get-classes-with-method r "newBuilder")
+        fns (map (fn [bc] {:ns (local-ns bc) :name (str (ftn-name bc) "-builder") :ftn (b/build-fn (.getName bc) "newBuilder")}) builder-classes)]
+    (map #(do (println "Interning " %)
+              (intern-fn %)) fns)))
