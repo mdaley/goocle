@@ -1,5 +1,7 @@
 (ns goocle.builder
-  (:require [goocle.reflections :as r]
+  (:require [goocle
+             [reflections :as r]
+             [utils :refer [fixup-dash-number]]]
             [camel-snake-kebab.core :refer [->kebab-case]]))
 
 (defn- kebabed
@@ -7,6 +9,7 @@
   [vals]
   (->> vals
        (map #(->kebab-case %))
+       (map fixup-dash-number)
        (interpose " ")
        (reduce str)))
 
@@ -16,6 +19,7 @@
     (let [kebabed-args (kebabed (map :name args))
           type-tests (->> args
                           (map #(str "(instance? " (:type %) " " (->kebab-case (:name %)) ")"))
+                          (map fixup-dash-number)
                           (interpose " ")
                           (reduce str))]
       (format "(and %s %s) (%s/%s %s)" kebabed-args type-tests class-name method-name kebabed-args))
@@ -27,7 +31,7 @@
 
 (defn build-multi-arg-fn
   [class-name method-name args]
-  (let [arg-names (kebabed (distinct (map :name (flatten args)))) ;(reduce str (interpose " " (distinct (map :name (flatten args)))))
+  (let [arg-names (kebabed (distinct (map :name (flatten args))))
         no-zero-args-overload? (seq (last args))
         cond-clause  (str "(cond "
                           (reduce str (interpose " " (map (partial build-cond-part class-name method-name) args)))
@@ -36,9 +40,14 @@
         (format "(fn [{:keys [%s]}] %s)" arg-names cond-clause)))
 
 (defn build-fn
-  "Build definition of function to call method on class based on relevant incoming parameters."
-  [class-name method-name]
-  (let [ordered-methods-args (r/get-ordered-methods-args class-name method-name)]
-    (if (and (= 1 (count ordered-methods-args)) (empty? (first ordered-methods-args)))
-      (build-zero-args-fn class-name method-name)
-      (build-multi-arg-fn class-name method-name ordered-methods-args))))
+  "Build seq of functions to call methods on class based on relevant incoming parameters."
+  [class-name method-regex]
+  (let [ordered-methods-args (r/get-ordered-methods-args class-name method-regex)]
+    (if (and (= 1 (count ordered-methods-args)) (empty? (:args (first ordered-methods-args))))
+      (seq [{:name (:name (first ordered-methods-args))
+              :fn (build-zero-args-fn class-name (:name (first ordered-methods-args)))}])
+      (->> (group-by :name ordered-methods-args)
+           (reduce-kv (fn [m k v] (assoc m k (map :args v))) {})
+           seq
+           (map (fn [v] {:name (first v)
+                        :fn (build-multi-arg-fn class-name (first v) (second v))}))))))

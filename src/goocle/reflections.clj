@@ -17,28 +17,29 @@
                         (.includePackage (into-array String [namespace])))))))
 
 (defn get-methods
-  [clazz method-name]
+  [clazz method-regex]
   (try
     (->> clazz
          .getMethods
-         (filter #(= (.getName %) method-name))
+         (filter #(re-matches method-regex (.getName %)))
+         (filter #(= (.getDeclaringClass %) clazz))
          seq)
     (catch ClassNotFoundException e)))
 
 (defn has-method
-  [type-name method-name]
-  (not (nil? (get-methods (Class/forName type-name) method-name))))
+  [type-name method-regex]
+  (not (nil? (get-methods (Class/forName type-name) method-regex))))
 
 (defn get-classes-with-method
-  [reflector name]
+  [reflector name-regex]
   (->> (.getAllTypes reflector)
-       (filter #(has-method % name))
+       (filter #(has-method % name-regex))
        (map #(Class/forName %))
        (filter #(Modifier/isPublic (.getModifiers %)))))
 
 (defn get-types-with-new-builder-methods
   [reflector]
-  (get-classes-with-method reflector "newBuilder"))
+  (get-classes-with-method reflector #"new.*Builder"))
 
 (defn coerce-if-primitive
   "Coerce to primitive if necessary."
@@ -56,31 +57,14 @@
 
 (defn get-method-args
   [method]
-  (map (fn [v] {:name (.getName v)
-               :type (coerce-if-primitive (.getTypeName (.getType v)))}) (seq (.getParameters method))))
+  {:name (.getName method)
+   :args
+   (map (fn [v] {:name (.getName v)
+                :type (coerce-if-primitive (.getTypeName (.getType v)))}) (seq (.getParameters method)))})
 
 (defn get-ordered-methods-args
-  [class-name method-name]
-  (->> (get-methods (Class/forName class-name) method-name)
+  [class-name method-regex]
+  (->> (get-methods (Class/forName class-name) method-regex)
        (map get-method-args)
-       (sort-by #(count (keys %)))
+       (sort-by #(count (keys (:args %))))
        reverse))
-
-;; (defn generate-fn
-;;   "Generate functions for method with the given name in the chosen class."
-;;   [clazz method-name]
-;;   (when-let [methods (get-methods clazz method-name)]
-;;     (map )))
-
-;; (defn make-fn-name
-;;   [prefix class]
-;;   (-> (.getName class)
-;;       (split #"\.")
-;;       last
-;;       ->kebab-case
-;;       ((partial str prefix))))
-
-;; (defn make-creators
-;;   [namespace]
-;;   (let [classes (get-classes-with-method (get-reflector-for-namespace namespace) "newBuilder")]
-;;     (map (partial make-fn-name "create-") classes)))
