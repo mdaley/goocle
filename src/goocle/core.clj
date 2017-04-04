@@ -5,7 +5,7 @@
              [utils :refer [fixup-dash-number]]]
             [clojure
                 [set :refer [map-invert]]
-             [string :refer [ends-with? replace]]]
+             [string :refer [ends-with?]]]
             [camel-snake-kebab.core :refer [->kebab-case]
              ])
   (:import [java.lang.reflect Modifier]))

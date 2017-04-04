@@ -28,7 +28,12 @@
 
 (defn has-method
   [type-name method-regex]
-  (not (nil? (get-methods (Class/forName type-name) method-regex))))
+  (println "TYPE-NAME" type-name)
+  (println "CLASS" (Class/forName type-name))
+  (try
+    (not (nil? (get-methods (Class/forName type-name) method-regex)))
+    (catch NoClassDefFoundError e
+      false)))
 
 (defn get-classes-with-method
   [reflector name-regex]
