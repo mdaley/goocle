@@ -1,0 +1,15 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+mkdir -p cgc
+cd cgc
+
+if [ -d .git ]; then
+  git checkout -f master
+  git pull
+else
+  git clone https://github.com/GoogleCloudPlatform/google-cloud-java.git .
+fi
+
+cd ..

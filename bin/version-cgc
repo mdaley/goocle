@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+cd cgc
+git checkout v${1} -f
+utilities/update_pom_version.sh ${1}-WithParameters
+
+sed -i 's/<compilerArgument>-Xlint:unchecked<\/compilerArgument>/<forceJavacCompilerUse>true<\/forceJavacCompilerUse><compilerArguments><parameters\/><Xlint:unchecked\/><\/compilerArguments>/' pom.xml
+
+cd ..

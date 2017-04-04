@@ -12,6 +12,10 @@ Copyright © 2017 FIXME
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
+## Prerequisites
+
+If building on a mac, you need to have gsed installed (perhaps using brew) and being used
+instead of the standard osx sed, e.g. by putting it into your path before sed.
 
 ## Building google-cloud-java
 
