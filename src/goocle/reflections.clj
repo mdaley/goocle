@@ -26,14 +26,14 @@
          seq)
     (catch ClassNotFoundException e)))
 
+(defn get-static-methods
+  [clazz method-regex]
+  (->> (get-methods clazz method-regex)
+       (filter #(Modifier/isStatic (.getModifiers %)))))
+
 (defn has-method
   [type-name method-regex]
-  (println "TYPE-NAME" type-name)
-  (println "CLASS" (Class/forName type-name))
-  (try
-    (not (nil? (get-methods (Class/forName type-name) method-regex)))
-    (catch NoClassDefFoundError e
-      false)))
+  (not (nil? (get-methods (Class/forName type-name) method-regex))))
 
 (defn get-classes-with-method
   [reflector name-regex]
