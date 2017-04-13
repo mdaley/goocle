@@ -1,5 +1,7 @@
 all:
 
+0.7.0: build_cgc
+
 0.11.1: build_cgc
 
 build_cgc:
