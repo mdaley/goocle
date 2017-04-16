@@ -7,5 +7,7 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [camel-snake-kebab "0.4.0" :exclusions [org.clojure/clojure]]
                  [org.reflections/reflections "0.9.11"]
-                 [javax.servlet/servlet-api "2.5"]]
+                 [javax.servlet/servlet-api "2.5"]
+                 [medley "0.8.2"]
+                 [com.cemerick/pomegranate "0.3.1"]]
   :main builder.core)
