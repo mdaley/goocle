@@ -48,7 +48,7 @@
         (if-let [methods (->> (get-static-methods clazz #"getDefault.*")
                               (filter #(= 0 (count (.getParameterTypes %)))))]
           (str s (join "" (map (fn [m]
-                               (format "(defn %s-%s [] (%s/%s)"
+                               (format "(defn %s-%s [] (%s/%s)\r\n"
                                        (-> (.getSimpleName clazz)
                                            (->kebab-case))
                                        (-> (.getName m)
@@ -67,7 +67,7 @@
                      (#(if (empty? %) "base" %)))]
     (assoc namespace
            :file (str (clojure.string/replace short-ns #"\." "_") ".clj")
-           :contents (str "(ns goocle." (clojure.string/replace short-ns #"\." "-") ")"
+           :contents (str "(ns goocle." (clojure.string/replace short-ns #"\." "-") ")\r\n"
                           (generate-default-instance-methods types)))))
 
 (defn build-namespaces
