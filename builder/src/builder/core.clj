@@ -28,21 +28,44 @@
 
 (defn write-output-file
   [gen-path {file :file contents :contents :as namespace}]
-  (let [path (str gen-path "/" file)]
+  (let [path (str gen-path "/src/" file)]
     (println "Generating contents of" path)
     (spit path contents)))
 
+(def project-file-template
+  "(defproject goocle \"%s-cgc%s\"
+  :description \"Goocle - a clojure wrapper for the Google Cloud Java library\"
+  :url \"https://github.com/mdaley/goocle\"
+  :license {:name \"Eclipse Public License\"
+            :url \"http://www.eclipse.org/legal/epl-v10.html\"}
+  :dependencies [[org.clojure/clojure \"1.8.0\"]
+                 [com.google.cloud/google-cloud \"%s\"]])")
+
+(def project-version
+  (some-> (slurp "project.clj")
+          clojure.edn/read-string
+          (nth 2)))
+
+(defn write-project-file
+  [gen-path version]
+  (spit (str gen-path "/project.clj") (format project-file-template
+                                              project-version
+                                              version
+                                              version)))
+
 (defn write-output-files
-  [namespaces]
+  [version namespaces]
   (let [gen-path (str (System/getProperty "user.dir") "/../generated")]
     (recreate-dir gen-path)
+    (write-project-file gen-path version)
+    (.mkdir (java.io.File. (str gen-path "/src")))
     (doall (map #(write-output-file gen-path %) namespaces))))
 
 (defn perform
   [version]
   (println (str "Building with Google Cloud Java version " version "."))
-  (println (load-cgc-dependencies version))
-  (write-output-files (build-namespaces)))
+  (println (load-cgc-dependencies (str version "-WithParameters")))
+  (write-output-files version (build-namespaces)))
 
 (defn -main [& args]
   (println "Goocle Builder")
