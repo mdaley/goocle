@@ -28,7 +28,7 @@
 
 (defn write-output-file
   [gen-path {file :file contents :contents :as namespace}]
-  (let [path (str gen-path "/src/" file)]
+  (let [path (str gen-path "/src/goocle/" file)]
     (println "Generating contents of" path)
     (spit path contents)))
 
@@ -59,6 +59,7 @@
     (recreate-dir gen-path)
     (write-project-file gen-path version)
     (.mkdir (java.io.File. (str gen-path "/src")))
+    (.mkdir (java.io.File. (str gen-path "/src/goocle")))
     (doall (map #(write-output-file gen-path %) namespaces))))
 
 (defn perform
