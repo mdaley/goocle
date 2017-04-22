@@ -48,7 +48,7 @@
         (if-let [methods (->> (get-static-methods clazz #"getDefault.*")
                               (filter #(= 0 (count (.getParameterTypes %)))))]
           (str s (join "" (map (fn [m]
-                               (format "(defn %s-%s [] (%s/%s)\r\n"
+                               (format "(defn %s-%s [] (%s/%s))\r\n"
                                        (-> (.getSimpleName clazz)
                                            (->kebab-case))
                                        (-> (.getName m)
